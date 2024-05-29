@@ -6,7 +6,6 @@ import ntplib
 def get_network_time():
     try:
         ntp_client = ntplib.NTPClient()
-        # response = ntp_client.request('0.asia.pool.ntp.org')
         response = ntp_client.request('time.windows.com')
         network_time = datetime.fromtimestamp(response.tx_time)
         return network_time
@@ -30,11 +29,9 @@ def refresh_network_time():
     if network_time:
         current_network_time = network_time
         time_label.config(text=network_time.strftime("%H:%M:%S"))
-        # 修改字体颜色，红色
         time_label.config(fg="red")
-        # 2秒后恢复颜色
-        root.after(2 * 1000, lambda: time_label.config(fg="green"))
-    root.after(10 * 1000, refresh_network_time)
+        root.after(2000, lambda: time_label.config(fg="green"))  # Change back to green after 2 seconds
+    root.after(10000, refresh_network_time)  # Refresh network time every 10 seconds
 
 
 def change_opacity(value):
@@ -47,11 +44,13 @@ def toggle_window():
     window_hidden = not window_hidden
     if window_hidden:
         root.overrideredirect(True)
+        root.grab_set()  # Make the window non-interactive
         refresh_button.pack_forget()
         opacity_slider.pack_forget()
         toggle_button.config(text="显示窗口")
     else:
         root.overrideredirect(False)
+        root.grab_release()  # Release the grab, allowing interaction
         refresh_button.pack(pady=10)
         opacity_slider.pack(pady=10)
         toggle_button.config(text="隐藏窗口")

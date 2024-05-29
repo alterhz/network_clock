@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkcalendar import Calendar
 from datetime import datetime
 import subprocess
@@ -45,46 +45,69 @@ def set_time(time_var):
 def add_time_entry():
     time_vars.append(tk.StringVar(value=datetime.now().strftime("%H:%M:%S")))
     label = tk.Label(root, text="Time {}: ".format(len(time_vars)))
-    label.pack(anchor="w", padx=(10, 0), pady=(5, 0))
+    row = len(time_vars) + 3
+    label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
     entry = ttk.Entry(root, textvariable=time_vars[-1])
-    entry.pack(anchor="w", padx=(10, 0), pady=(0, 5))
+    entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
     button = tk.Button(root, text="Set Time", command=lambda: set_time(time_vars[-1]))
-    button.pack(anchor="w", padx=(10, 0), pady=(0, 10))
+    button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
+
+
+def show_about_dialog():
+    messagebox.showinfo("About", "System Date & Time Setter\nVersion 1.0\nDeveloped by Your Name")
 
 
 # Create main window
 root = tk.Tk()
 root.title("System Date & Time Setter")
+# Set window size
+root.geometry("800x600")
+
+# Create menu bar
+menubar = tk.Menu(root)
+root.config(menu=menubar)
+
+# Create a "File" menu
+file_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="File", menu=file_menu)
+file_menu.add_command(label="Run Timer", command=lambda: subprocess.run(['timer.exe']))
+file_menu.add_command(label="Exit", command=root.quit)
+
+# Create a "Help" menu
+help_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="About", command=show_about_dialog)
 
 # Create calendar
 calendar = Calendar(root, selectmode='day', year=datetime.now().year, month=datetime.now().month,
                     day=datetime.now().day)
-calendar.pack(padx=10, pady=10)
+calendar.grid(row=0, column=0, padx=(10, 0), pady=(10, 0))
 
 # Create button to set date
 set_date_button = tk.Button(root, text="Set Date", command=set_date)
-set_date_button.pack(pady=5)
-
-# Load cached time data or use current time as default
-time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
-time_labels = ["Time {}: ".format(i) for i in range(1, len(time_vars)+1)]
-
-# Button to add more time entries
-add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
-add_time_button.pack(pady=(10, 0))
-
-# Create time selection entries and buttons in a single row
-for i in range(len(time_vars)):
-    label = tk.Label(root, text=time_labels[i])
-    label.pack(anchor="w", padx=(10, 0), pady=(5, 0))
-    entry = ttk.Entry(root, textvariable=time_vars[i])
-    entry.pack(anchor="w", padx=(10, 0), pady=(0, 5))
-    button = tk.Button(root, text="Set Time", command=lambda idx=i: set_time(time_vars[idx]))
-    button.pack(anchor="w", padx=(10, 0), pady=(0, 10))
+set_date_button.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
 
 # Status label
 status_label = tk.Label(root, text="")
-status_label.pack(pady=(10, 0))
+status_label.grid(row=1, column=0, columnspan=3, padx=(10, 0), pady=(10, 0))
+
+# Button to add more time entries
+add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
+add_time_button.grid(row=2, column=0, padx=(10, 0), pady=(10, 0))
+
+# Load cached time data or use current time as default
+time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
+time_labels = ["Time {}: ".format(i) for i in range(1, len(time_vars) + 1)]
+
+# Create time selection entries and buttons in a single row
+for i in range(len(time_vars)):
+    row = i + 3
+    label = tk.Label(root, text=time_labels[i])
+    label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
+    entry = ttk.Entry(root, textvariable=time_vars[i])
+    entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
+    button = tk.Button(root, text="Set Time", command=lambda idx=i: set_time(time_vars[idx]))
+    button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
 
 
 # Function to save time cache when the window is closed
