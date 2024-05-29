@@ -1,69 +1,124 @@
 import tkinter as tk
-from datetime import datetime, timedelta
-import ntplib
+from tkinter import ttk, messagebox
+from tkcalendar import Calendar
+from datetime import datetime
+import subprocess
+import pickle
+from babel import numbers
+
+import timer
 
 
-def get_network_time():
+# Function to load cached time data
+def load_time_cache():
     try:
-        ntp_client = ntplib.NTPClient()
-        # response = ntp_client.request('pool.ntp.org')
-        # response = ntp_client.request('asia.pool.ntp.org')
-        response = ntp_client.request('0.asia.pool.ntp.org')
-        network_time = datetime.fromtimestamp(response.tx_time)
-        return network_time
+        with open('time_cache.pkl', 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return [datetime.now().strftime("%H:%M:%S") for _ in range(3)]
+
+
+# Function to save time data to cache
+def save_time_cache():
+    with open('time_cache.pkl', 'wb') as f:
+        pickle.dump([time_var.get() for time_var in time_vars], f)
+
+
+def set_date():
+    selected_date_str = calendar.get_date()
+    selected_date_obj = datetime.strptime(selected_date_str, "%m/%d/%y").date()  # Modified format
+    date = selected_date_obj.strftime("%Y/%m/%d")
+    try:
+        subprocess.run(['date', date], shell=True)  # Modified format
+        status_label.config(text="System date updated successfully!")
     except Exception as e:
-        print("Error fetching network time:", e)
-        return None
+        status_label.config(text="Error: " + str(e))
 
 
-def update_time():
-    global current_network_time
-    if current_network_time:
-        current_network_time += timedelta(seconds=1)
-        current_time = current_network_time.strftime("%H:%M:%S")
-        time_label.config(text=current_time)
-    root.after(1000, update_time)  # 每秒钟更新一次时间显示
+def set_time(time_var):
+    selected_time = time_var.get()
+    try:
+        subprocess.run(['time', selected_time], shell=True)
+        status_label.config(text="System time updated successfully!")
+    except Exception as e:
+        status_label.config(text="Error: " + str(e))
 
 
-def refresh_network_time():
-    global current_network_time
-    network_time = get_network_time()
-    if network_time:
-        current_network_time = network_time
-        time_label.config(text=network_time.strftime("%H:%M:%S"))
-    root.after(60 * 1000, refresh_network_time)  # 每分钟获取一次网络时间
+def add_time_entry():
+    time_vars.append(tk.StringVar(value=datetime.now().strftime("%H:%M:%S")))
+    label = tk.Label(root, text="Time {}: ".format(len(time_vars)))
+    row = len(time_vars) + 3
+    label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
+    entry = ttk.Entry(root, textvariable=time_vars[-1])
+    entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
+    button = tk.Button(root, text="Set Time", command=lambda: set_time(time_vars[-1]))
+    button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
 
 
-def change_opacity(value):
-    opacity = max(float(value) / 100, 0.1)  # 将滑块值转换为透明度比例，确保最小值为0.1
-    root.attributes("-alpha", opacity)  # 设置窗口透明度
+def show_about_dialog():
+    messagebox.showinfo("About", "System Date & Time Setter\nVersion 1.0\nDeveloped by Your Name")
 
 
+# Create main window
 root = tk.Tk()
-root.title("当前时间")
-root.wm_attributes("-topmost", True)  # 窗口置顶
-root.attributes("-alpha", 0.8)  # 设置默认透明度为0.8
+root.title("System Date & Time Setter")
+# Set window size
+root.geometry("800x600")
 
-time_label = tk.Label(root, font=("Helvetica", 48), bg="black", fg="white")
-time_label.pack(padx=20, pady=20)
+# Create menu bar
+menubar = tk.Menu(root)
+root.config(menu=menubar)
 
-current_network_time = get_network_time()  # 获取网络时间
-if current_network_time:
-    time_label.config(text=current_network_time.strftime("%H:%M:%S"))
+# Create a "File" menu
+file_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="File", menu=file_menu)
+file_menu.add_command(label="Run timer", command=lambda: timer.main())
+file_menu.add_command(label="Exit", command=root.quit)
 
-refresh_button = tk.Button(root, text="刷新", command=refresh_network_time)
-refresh_button.pack(pady=10)
+# Create a "Help" menu
+help_menu = tk.Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="About", command=show_about_dialog)
 
-# 创建一个IntVar对象并设置初始值为80
-transparent = 80
-opacity_var = tk.IntVar(value=transparent)
-opacity_slider = tk.Scale(root, from_=1, to=100, orient=tk.HORIZONTAL, label="透明度", command=change_opacity,
-                          variable=opacity_var)
-opacity_slider.pack(pady=10)
+# Create calendar
+calendar = Calendar(root, selectmode='day', year=datetime.now().year, month=datetime.now().month,
+                    day=datetime.now().day)
+calendar.grid(row=0, column=0, padx=(10, 0), pady=(10, 0))
 
-change_opacity(transparent)
+# Create button to set date
+set_date_button = tk.Button(root, text="Set Date", command=set_date)
+set_date_button.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
 
-update_time()  # 启动每秒钟更新时间显示的函数
-refresh_network_time()  # 启动每分钟获取网络时间的函数
+# Status label
+status_label = tk.Label(root, text="")
+status_label.grid(row=1, column=0, columnspan=3, padx=(10, 0), pady=(10, 0))
+
+# Button to add more time entries
+add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
+add_time_button.grid(row=2, column=0, padx=(10, 0), pady=(10, 0))
+
+# Load cached time data or use current time as default
+time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
+time_labels = ["Time {}: ".format(i) for i in range(1, len(time_vars) + 1)]
+
+# Create time selection entries and buttons in a single row
+for i in range(len(time_vars)):
+    row = i + 3
+    label = tk.Label(root, text=time_labels[i])
+    label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
+    entry = ttk.Entry(root, textvariable=time_vars[i])
+    entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
+    button = tk.Button(root, text="Set Time", command=lambda idx=i: set_time(time_vars[idx]))
+    button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
+
+
+# Function to save time cache when the window is closed
+def on_closing():
+    save_time_cache()
+    root.destroy()
+
+
+# Configure the closing event
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()

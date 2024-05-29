@@ -14,76 +14,79 @@ def get_network_time():
         return None
 
 
-def update_time():
-    global current_network_time
-    if current_network_time:
-        current_network_time += timedelta(seconds=1)
-        current_time = current_network_time.strftime("%H:%M:%S")
-        time_label.config(text=current_time)
-    root.after(1000, update_time)
+class NetworkTimeApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("当前时间")
+        master.wm_attributes("-topmost", True)
+        master.attributes("-alpha", 0.8)
+
+        self.time_label = tk.Label(master, font=("Helvetica", 48), bg="black", fg="green")
+        self.time_label.pack(padx=20, pady=20)
+
+        self.current_network_time = get_network_time()
+        if self.current_network_time:
+            self.time_label.config(text=self.current_network_time.strftime("%H:%M:%S"))
+
+        self.refresh_button = tk.Button(master, text="刷新", command=self.refresh_network_time)
+        self.refresh_button.pack(pady=10)
+
+        transparent = 80
+        self.opacity_var = tk.IntVar(value=transparent)
+        self.opacity_slider = tk.Scale(master, from_=1, to=100, orient=tk.HORIZONTAL, label="透明度",
+                                       command=self.change_opacity, variable=self.opacity_var)
+        self.opacity_slider.pack(pady=10)
+
+        self.change_opacity(transparent)
+
+        self.update_time()
+        self.refresh_network_time()
+
+        self.window_hidden = False
+        self.toggle_button = tk.Button(master, text="隐藏窗口", command=self.toggle_window)
+        self.toggle_button.pack(pady=10)
+
+    def update_time(self):
+        if self.current_network_time:
+            self.current_network_time += timedelta(seconds=1)
+            current_time = self.current_network_time.strftime("%H:%M:%S")
+            self.time_label.config(text=current_time)
+        self.master.after(1000, self.update_time)
+
+    def refresh_network_time(self):
+        network_time = get_network_time()
+        if network_time:
+            self.current_network_time = network_time
+            self.time_label.config(text=network_time.strftime("%H:%M:%S"))
+            self.time_label.config(fg="red")
+            self.master.after(2000, lambda: self.time_label.config(fg="green"))  # Change back to green after 2 seconds
+        self.master.after(10000, self.refresh_network_time)  # Refresh network time every 10 seconds
+
+    def change_opacity(self, value):
+        opacity = max(float(value) / 100, 0.1)
+        self.master.attributes("-alpha", opacity)
+
+    def toggle_window(self):
+        self.window_hidden = not self.window_hidden
+        if self.window_hidden:
+            self.master.overrideredirect(True)
+            self.master.grab_set()  # Make the window non-interactive
+            self.refresh_button.pack_forget()
+            self.opacity_slider.pack_forget()
+            self.toggle_button.config(text="显示窗口")
+        else:
+            self.master.overrideredirect(False)
+            self.master.grab_release()  # Release the grab, allowing interaction
+            self.refresh_button.pack(pady=10)
+            self.opacity_slider.pack(pady=10)
+            self.toggle_button.config(text="隐藏窗口")
 
 
-def refresh_network_time():
-    global current_network_time
-    network_time = get_network_time()
-    if network_time:
-        current_network_time = network_time
-        time_label.config(text=network_time.strftime("%H:%M:%S"))
-        time_label.config(fg="red")
-        root.after(2000, lambda: time_label.config(fg="green"))  # Change back to green after 2 seconds
-    root.after(10000, refresh_network_time)  # Refresh network time every 10 seconds
+def main():
+    root = tk.Tk()
+    app = NetworkTimeApp(root)
+    root.mainloop()
 
 
-def change_opacity(value):
-    opacity = max(float(value) / 100, 0.1)
-    root.attributes("-alpha", opacity)
-
-
-def toggle_window():
-    global window_hidden
-    window_hidden = not window_hidden
-    if window_hidden:
-        root.overrideredirect(True)
-        root.grab_set()  # Make the window non-interactive
-        refresh_button.pack_forget()
-        opacity_slider.pack_forget()
-        toggle_button.config(text="显示窗口")
-    else:
-        root.overrideredirect(False)
-        root.grab_release()  # Release the grab, allowing interaction
-        refresh_button.pack(pady=10)
-        opacity_slider.pack(pady=10)
-        toggle_button.config(text="隐藏窗口")
-
-
-root = tk.Tk()
-root.title("当前时间")
-root.wm_attributes("-topmost", True)
-root.attributes("-alpha", 0.8)
-
-time_label = tk.Label(root, font=("Helvetica", 48), bg="black", fg="green")
-time_label.pack(padx=20, pady=20)
-
-current_network_time = get_network_time()
-if current_network_time:
-    time_label.config(text=current_network_time.strftime("%H:%M:%S"))
-
-refresh_button = tk.Button(root, text="刷新", command=refresh_network_time)
-refresh_button.pack(pady=10)
-
-transparent = 80
-opacity_var = tk.IntVar(value=transparent)
-opacity_slider = tk.Scale(root, from_=1, to=100, orient=tk.HORIZONTAL, label="透明度", command=change_opacity,
-                          variable=opacity_var)
-opacity_slider.pack(pady=10)
-
-change_opacity(transparent)
-
-update_time()
-refresh_network_time()
-
-window_hidden = False
-toggle_button = tk.Button(root, text="隐藏窗口", command=toggle_window)
-toggle_button.pack(pady=10)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
