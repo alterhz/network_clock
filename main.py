@@ -8,6 +8,8 @@ from babel import numbers
 
 import timer
 
+PREX_ROW_NUM = 4
+
 
 # Function to load cached time data
 def load_time_cache():
@@ -60,7 +62,7 @@ def set_str_time(selected_time: str):
 def add_time_entry():
     time_vars.append(tk.StringVar(value=datetime.now().strftime("%H:%M:%S")))
     label = tk.Label(root, text="Time {}: ".format(len(time_vars)))
-    row = len(time_vars) + 3
+    row = len(time_vars) + PREX_ROW_NUM
     label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
     entry = ttk.Entry(root, textvariable=time_vars[-1])
     entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
@@ -78,7 +80,7 @@ def set_network_time():
 
 
 def show_about_dialog():
-    messagebox.showinfo("About", "System Date & Time Setter\nVersion 1.0\nDeveloped by Your Name")
+    messagebox.showinfo("About", "System Date & Time Setter\nVersion 1.0\nDeveloped by HZ")
 
 
 # Create main window
@@ -105,27 +107,43 @@ help_menu.add_command(label="About", command=show_about_dialog)
 set_network_time_button = tk.Button(root, text="Network Timer", command=timer.main, background="green")
 set_network_time_button.grid(row=0, column=0, padx=(10, 0), pady=(10, 0))
 
+# 使用timer.get_network_time()，网络日期和时间设置本地日期和时间
+# 请注意，这将需要管理员权限
+set_network_time_button = tk.Button(root, text="Set Network Time", command=set_network_time)
+set_network_time_button.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
+
 # Create calendar
 calendar = Calendar(root, selectmode='day', year=datetime.now().year, month=datetime.now().month,
                     day=datetime.now().day)
-calendar.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
+calendar.grid(row=1, column=0, columnspan=2, padx=(10, 0), pady=(10, 0))
 
 # Create button to set date
 set_date_button = tk.Button(root, text="Set Date", command=set_date)
-set_date_button.grid(row=0, column=2, padx=(10, 0), pady=(10, 0))
+set_date_button.grid(row=1, column=2, padx=(10, 0), pady=(10, 0))
 
-# 使用timer.get_network_time()，网络日期和时间设置本地日期和时间
-# 请注意，这将需要管理员权限
-set_network_time_button = tk.Button(root, text="Set Network Time", command=set_network_time, fg="red")
-set_network_time_button.grid(row=0, column=3, padx=(10, 0), pady=(10, 0))
+# 显示当前系统日期和时间
+time_label = tk.Label(root, text="", background="black", foreground="white", font=("Helvetica", 16))
+time_label.grid(row=2, column=0, columnspan=2, padx=(10, 0), pady=(10, 0))
 
-# Status label
-status_label = tk.Label(root, text="")
-status_label.grid(row=1, column=0, columnspan=3, padx=(10, 0), pady=(10, 0))
+
+def update_time():
+    # 年月日时分秒
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    time_label.config(text=current_time)
+    root.after(1000, update_time)
+
+
+update_time()
+root.after(1000, update_time)
+
 
 # Button to add more time entries
-add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
-add_time_button.grid(row=2, column=0)
+add_time_button = tk.Button(root, text="Add Time", command=add_time_entry, background="green")
+add_time_button.grid(row=2, column=2)
+
+# Status label 字体加粗
+status_label = tk.Label(root, text="", font=("Helvetica", 12), foreground="red")
+status_label.grid(row=3, column=0, columnspan=4, padx=(10, 0), pady=(10, 0))
 
 # Load cached time data or use current time as default
 time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
@@ -133,10 +151,10 @@ time_labels = ["Time {}: ".format(i) for i in range(1, len(time_vars) + 1)]
 
 # Create time selection entries and buttons in a single row
 for i in range(len(time_vars)):
-    row = i + 3
+    row = i + 4
     label = tk.Label(root, text=time_labels[i])
     label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
-    entry = ttk.Entry(root, textvariable=time_vars[i])
+    entry = ttk.Entry(root, textvariable=time_vars[i], justify="center")
     entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
     button = tk.Button(root, text="Set Time", command=lambda idx=i: set_str_time(time_vars[idx].get()))
     button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
