@@ -1,60 +1,51 @@
 import tkinter as tk
-from datetime import datetime, timedelta
-import ntplib
+from tkinter import ttk
+from tkcalendar import Calendar, DateEntry
 
-def get_network_time():
-    try:
-        ntp_client = ntplib.NTPClient()
-        response = ntp_client.request('time.windows.com')
-        network_time = datetime.fromtimestamp(response.tx_time)
-        return network_time
-    except Exception as e:
-        print("Error fetching network time:", e)
-        return None
 
-def update_time():
-    global current_network_time
-    if current_network_time:
-        current_network_time += timedelta(seconds=1)
-        current_time = current_network_time.strftime("%H:%M:%S")
-        time_label.config(text=current_time)
-    root.after(1000, update_time)
+class TimePicker(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-def refresh_network_time():
-    global current_network_time
-    network_time = get_network_time()
-    if network_time:
-        current_network_time = network_time
-        time_label.config(text=network_time.strftime("%H:%M:%S"))
-        time_label.config(fg="red")
-        root.after(2000, lambda: time_label.config(fg="green"))  # Change back to green after 2 seconds
-    root.after(10000, refresh_network_time)  # Refresh network time every 10 seconds
+        self.title("时间选择器示例")
 
-def change_opacity(value):
-    opacity = max(float(value) / 100, 0.1)
-    root.attributes("-alpha", opacity)
+        # 日期选择器
+        self.date_label = tk.Label(self, text="选择日期:")
+        self.date_label.grid(row=0, column=0, padx=10, pady=10)
+        self.date_entry = DateEntry(self, width=12, background='darkblue',
+                                    foreground='white', borderwidth=2, date_pattern='y-mm-dd')
+        self.date_entry.grid(row=0, column=1, padx=10, pady=10)
 
-def pass_through_click(event):
-    x, y = event.x_root, event.y_root
-    root.event_generate('<Button-1>', x=x, y=y, time=event.time)
+        # 时间选择器
+        self.time_label = tk.Label(self, text="选择时间:")
+        self.time_label.grid(row=1, column=0, padx=10, pady=10)
 
-root = tk.Tk()
-root.title("当前时间")
-root.wm_attributes("-topmost", True)
-root.attributes("-alpha", 0.5)  # Set initial transparency to 0 (fully transparent)
-root.overrideredirect(True)  # Remove window decorations
-root.geometry("+0+0")  # Move the window to the top left corner
+        self.hour_var = tk.StringVar(value='00')
+        self.hour_spinbox = tk.Spinbox(self, from_=0, to=23, wrap=True, textvariable=self.hour_var, width=3,
+                                       format="%02.0f")
+        self.hour_spinbox.grid(row=1, column=1, padx=(10, 0), pady=10, sticky='w')
 
-time_label = tk.Label(root, font=("Helvetica", 48), bg="black", fg="green")
-time_label.pack(padx=20, pady=20)
+        self.minute_var = tk.StringVar(value='00')
+        self.minute_spinbox = tk.Spinbox(self, from_=0, to=59, wrap=True, textvariable=self.minute_var, width=3,
+                                         format="%02.0f")
+        self.minute_spinbox.grid(row=1, column=1, padx=(60, 0), pady=10, sticky='w')
 
-current_network_time = get_network_time()
-if current_network_time:
-    time_label.config(text=current_network_time.strftime("%H:%M:%S"))
+        # 获取结果按钮
+        self.get_button = tk.Button(self, text="获取选择的日期和时间", command=self.get_datetime)
+        self.get_button.grid(row=2, column=0, columnspan=2, pady=10)
 
-update_time()
-refresh_network_time()
+        # 显示结果
+        self.result_label = tk.Label(self, text="")
+        self.result_label.grid(row=3, column=0, columnspan=2, pady=10)
 
-root.bind('<Button-1>', pass_through_click)  # Bind left click event to pass_through_click function
+    def get_datetime(self):
+        date = self.date_entry.get()
+        hour = self.hour_var.get()
+        minute = self.minute_var.get()
+        datetime_str = f"选择的日期和时间: {date} {hour}:{minute}"
+        self.result_label.config(text=datetime_str)
 
-root.mainloop()
+
+if __name__ == "__main__":
+    app = TimePicker()
+    app.mainloop()
