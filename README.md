@@ -8,7 +8,7 @@ python timer.py
 
 ## package
 ```bash
-pack.bat
+pack_timer.bat
 ```
 generate a exe 'dist/timer.exe'
 

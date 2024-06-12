@@ -30,7 +30,11 @@ def refresh_network_time():
     if network_time:
         current_network_time = network_time
         time_label.config(text=network_time.strftime("%H:%M:%S"))
-    root.after(60 * 1000, refresh_network_time)
+        # 修改字体颜色，红色
+        time_label.config(fg="red")
+        # 2秒后恢复颜色
+        root.after(2 * 1000, lambda: time_label.config(fg="green"))
+    root.after(10 * 1000, refresh_network_time)
 
 
 def change_opacity(value):
@@ -58,7 +62,7 @@ root.title("当前时间")
 root.wm_attributes("-topmost", True)
 root.attributes("-alpha", 0.8)
 
-time_label = tk.Label(root, font=("Helvetica", 48), bg="black", fg="white")
+time_label = tk.Label(root, font=("Helvetica", 48), bg="black", fg="green")
 time_label.pack(padx=20, pady=20)
 
 current_network_time = get_network_time()
