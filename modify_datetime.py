@@ -4,7 +4,6 @@ from tkcalendar import Calendar
 from datetime import datetime
 import subprocess
 import pickle
-# 注意：from babel import numbers，不然打包后运行会报错
 from babel import numbers
 
 
@@ -14,7 +13,7 @@ def load_time_cache():
         with open('time_cache.pkl', 'rb') as f:
             return pickle.load(f)
     except FileNotFoundError:
-        return [datetime.now().strftime("%H:%M:%S") for _ in range(5)]
+        return [datetime.now().strftime("%H:%M:%S") for _ in range(3)]
 
 
 # Function to save time data to cache
@@ -43,6 +42,16 @@ def set_time(time_var):
         status_label.config(text="Error: " + str(e))
 
 
+def add_time_entry():
+    time_vars.append(tk.StringVar(value=datetime.now().strftime("%H:%M:%S")))
+    label = tk.Label(root, text="Time {}: ".format(len(time_vars)))
+    label.pack(anchor="w", padx=(10, 0), pady=(5, 0))
+    entry = ttk.Entry(root, textvariable=time_vars[-1])
+    entry.pack(anchor="w", padx=(10, 0), pady=(0, 5))
+    button = tk.Button(root, text="Set Time", command=lambda: set_time(time_vars[-1]))
+    button.pack(anchor="w", padx=(10, 0), pady=(0, 10))
+
+
 # Create main window
 root = tk.Tk()
 root.title("System Date & Time Setter")
@@ -57,11 +66,15 @@ set_date_button = tk.Button(root, text="Set Date", command=set_date)
 set_date_button.pack(pady=5)
 
 # Load cached time data or use current time as default
-time_labels = ["Time 1:", "Time 2:", "Time 3:", "Time 4:", "Time 5:"]
 time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
+time_labels = ["Time {}: ".format(i) for i in range(1, len(time_vars)+1)]
+
+# Button to add more time entries
+add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
+add_time_button.pack(pady=(10, 0))
 
 # Create time selection entries and buttons in a single row
-for i in range(5):
+for i in range(len(time_vars)):
     label = tk.Label(root, text=time_labels[i])
     label.pack(anchor="w", padx=(10, 0), pady=(5, 0))
     entry = ttk.Entry(root, textvariable=time_vars[i])
