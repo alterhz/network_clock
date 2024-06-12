@@ -4,7 +4,7 @@ from tkcalendar import Calendar
 from datetime import datetime
 import subprocess
 import pickle
-# ×¢Òâ£ºfrom babel import numbers£¬²»È»´ò°üºóÔËĞĞ»á±¨´í
+# æ³¨æ„ï¼šfrom babel import numbersï¼Œä¸ç„¶æ‰“åŒ…åè¿è¡Œä¼šæŠ¥é”™
 from babel import numbers
 
 
