@@ -28,6 +28,15 @@ def set_date():
     selected_date_str = calendar.get_date()
     selected_date_obj = datetime.strptime(selected_date_str, "%m/%d/%y").date()  # Modified format
     date = selected_date_obj.strftime("%Y/%m/%d")
+    set_str_date(date)
+
+
+def set_str_date(date: str):
+    """
+    Set the system date to the selected date
+    :param date: The selected date in YYYY/MM/DD format
+    :return:
+    """
     try:
         subprocess.run(['date', date], shell=True)  # Modified format
         status_label.config(text="System date updated successfully!")
@@ -35,8 +44,12 @@ def set_date():
         status_label.config(text="Error: " + str(e))
 
 
-def set_time(time_var):
-    selected_time = time_var.get()
+def set_str_time(selected_time: str):
+    """
+    Set the system time to the selected time
+    :param selected_time: The selected time in HH:MM:SS format
+    :return:
+    """
     try:
         subprocess.run(['time', selected_time], shell=True)
         status_label.config(text="System time updated successfully!")
@@ -51,8 +64,17 @@ def add_time_entry():
     label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
     entry = ttk.Entry(root, textvariable=time_vars[-1])
     entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
-    button = tk.Button(root, text="Set Time", command=lambda: set_time(time_vars[-1]))
+    button = tk.Button(root, text="Set Time", command=lambda: set_str_time(time_vars[-1].get()))
     button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
+
+
+def set_network_time():
+    network_time = timer.get_network_time()
+    if network_time:
+        set_str_date(network_time.strftime("%Y/%m/%d"))
+        set_str_time(network_time.strftime("%H:%M:%S"))
+    else:
+        status_label.config(text="Error fetching network time")
 
 
 def show_about_dialog():
@@ -61,7 +83,7 @@ def show_about_dialog():
 
 # Create main window
 root = tk.Tk()
-root.title("System Date & Time Setter")
+root.title("系统日期和时间设置器")
 # Set window size
 root.geometry("800x600")
 
@@ -72,22 +94,30 @@ root.config(menu=menubar)
 # Create a "File" menu
 file_menu = tk.Menu(menubar, tearoff=0)
 menubar.add_cascade(label="File", menu=file_menu)
-file_menu.add_command(label="Run timer", command=lambda: timer.main())
-file_menu.add_command(label="Exit", command=root.quit)
+file_menu.add_command(label="Network Timer", command=lambda: timer.main())
+file_menu.add_command(label="Exit", command=lambda: on_closing())
 
 # Create a "Help" menu
 help_menu = tk.Menu(menubar, tearoff=0)
 menubar.add_cascade(label="Help", menu=help_menu)
 help_menu.add_command(label="About", command=show_about_dialog)
 
+set_network_time_button = tk.Button(root, text="Network Timer", command=timer.main, background="green")
+set_network_time_button.grid(row=0, column=0, padx=(10, 0), pady=(10, 0))
+
 # Create calendar
 calendar = Calendar(root, selectmode='day', year=datetime.now().year, month=datetime.now().month,
                     day=datetime.now().day)
-calendar.grid(row=0, column=0, padx=(10, 0), pady=(10, 0))
+calendar.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
 
 # Create button to set date
 set_date_button = tk.Button(root, text="Set Date", command=set_date)
-set_date_button.grid(row=0, column=1, padx=(10, 0), pady=(10, 0))
+set_date_button.grid(row=0, column=2, padx=(10, 0), pady=(10, 0))
+
+# 使用timer.get_network_time()，网络日期和时间设置本地日期和时间
+# 请注意，这将需要管理员权限
+set_network_time_button = tk.Button(root, text="Set Network Time", command=set_network_time, fg="red")
+set_network_time_button.grid(row=0, column=3, padx=(10, 0), pady=(10, 0))
 
 # Status label
 status_label = tk.Label(root, text="")
@@ -95,7 +125,7 @@ status_label.grid(row=1, column=0, columnspan=3, padx=(10, 0), pady=(10, 0))
 
 # Button to add more time entries
 add_time_button = tk.Button(root, text="Add Time", command=add_time_entry)
-add_time_button.grid(row=2, column=0, padx=(10, 0), pady=(10, 0))
+add_time_button.grid(row=2, column=0)
 
 # Load cached time data or use current time as default
 time_vars = [tk.StringVar(value=time) for time in load_time_cache()]
@@ -108,7 +138,7 @@ for i in range(len(time_vars)):
     label.grid(row=row, column=0, padx=(10, 0), pady=(5, 0))
     entry = ttk.Entry(root, textvariable=time_vars[i])
     entry.grid(row=row, column=1, padx=(10, 0), pady=(0, 5))
-    button = tk.Button(root, text="Set Time", command=lambda idx=i: set_time(time_vars[idx]))
+    button = tk.Button(root, text="Set Time", command=lambda idx=i: set_str_time(time_vars[idx].get()))
     button.grid(row=row, column=2, padx=(10, 0), pady=(0, 5))
 
 

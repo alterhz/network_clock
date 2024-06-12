@@ -17,19 +17,23 @@ def get_network_time():
 class NetworkTimeApp:
     def __init__(self, master):
         self.master = master
-        master.title("当前时间")
+        master.title("当前网络时间")
         master.wm_attributes("-topmost", True)
         master.attributes("-alpha", 0.8)
 
+        # 日期
+        self.date_label = tk.Label(master, font=("Helvetica", 16), bg="black", fg="white")
+        self.date_label.pack(padx=1, pady=1)
+        # 时间
         self.time_label = tk.Label(master, font=("Helvetica", 48), bg="black", fg="green")
-        self.time_label.pack(padx=20, pady=20)
+        self.time_label.pack(padx=20)
 
         self.current_network_time = get_network_time()
         if self.current_network_time:
             self.time_label.config(text=self.current_network_time.strftime("%H:%M:%S"))
 
         self.refresh_button = tk.Button(master, text="刷新", command=self.refresh_network_time)
-        self.refresh_button.pack(pady=10)
+        self.refresh_button.pack(pady=10, ipadx=10)
 
         transparent = 80
         self.opacity_var = tk.IntVar(value=transparent)
@@ -57,6 +61,7 @@ class NetworkTimeApp:
         network_time = get_network_time()
         if network_time:
             self.current_network_time = network_time
+            self.date_label.config(text=network_time.strftime("%Y年%m月%d日"))
             self.time_label.config(text=network_time.strftime("%H:%M:%S"))
             self.time_label.config(fg="red")
             self.master.after(2000, lambda: self.time_label.config(fg="green"))  # Change back to green after 2 seconds
